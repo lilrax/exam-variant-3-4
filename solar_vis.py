@@ -11,7 +11,7 @@
 header_font = "Arial-16"
 """Шрифт в заголовке"""
 
-window_width = 800
+window_width = 1000
 """Ширина окна"""
 
 window_height = 800
@@ -26,22 +26,18 @@ scale_factor = None
 
 def calculate_scale_factor(max_distance):
     """Вычисляет значение глобальной переменной **scale_factor** по данной характерной длине."""
+
     global scale_factor
-    scale_factor = 0.4 * min(window_height, window_width) / max_distance
+
+    if max_distance == 0:
+        max_distance = 1
+
+    scale_factor = 0.45 * min(window_height, window_width) / max_distance
     print("Scale factor:", scale_factor)
 
 
 def scale_x(x):
-    """Возвращает экранную **x** координату по **x** координате модели.
-
-    Принимает вещественное число, возвращает целое число.
-    В случае выхода **x** координаты за пределы экрана возвращает
-    координату, лежащую за пределами холста.
-
-    Параметры:
-
-    **x** — x-координата модели.
-    """
+    """Возвращает экранную **x** координату по **x** координате модели."""
 
     return int(x * scale_factor) + window_width // 2
 
@@ -49,73 +45,67 @@ def scale_x(x):
 def scale_y(y):
     """Возвращает экранную **y** координату по **y** координате модели.
 
-    Принимает вещественное число, возвращает целое число.
-    В случае выхода **y** координаты за пределы экрана возвращает
-    координату, лежащую за пределами холста.
     Направление оси развёрнуто, чтобы у модели ось **y** смотрела вверх.
-
-    Параметры:
-
-    **y** — y-координата модели.
     """
 
     return window_height // 2 - int(y * scale_factor)
 
 
-def create_star_image(space, star):
-    """Создаёт отображаемый объект звезды.
+def create_circle_image(space, body):
+    """Создаёт круглый графический объект для звезды, планеты или спутника."""
 
-    Параметры:
+    x = scale_x(body.x)
+    y = scale_y(body.y)
+    r = body.R
 
-    **space** — холст для рисования.
-    **star** — объект звезды.
-    """
-
-    x = scale_x(star.x)
-    y = scale_y(star.y)
-    r = star.R
-    star.image = space.create_oval(
+    body.image = space.create_oval(
         [x - r, y - r],
         [x + r, y + r],
-        fill=star.color
+        fill=body.color,
+        outline=body.color
     )
+
+
+def create_star_image(space, star):
+    """Создаёт отображаемый объект звезды."""
+
+    create_circle_image(space, star)
 
 
 def create_planet_image(space, planet):
-    """Создаёт отображаемый объект планеты.
+    """Создаёт отображаемый объект планеты."""
 
-    Параметры:
+    create_circle_image(space, planet)
 
-    **space** — холст для рисования.
-    **planet** — объект планеты.
-    """
 
-    x = scale_x(planet.x)
-    y = scale_y(planet.y)
-    r = planet.R
-    planet.image = space.create_oval(
-        [x - r, y - r],
-        [x + r, y + r],
-        fill=planet.color
-    )
+def create_satellite_image(space, satellite):
+    """Создаёт отображаемый объект спутника."""
+
+    create_circle_image(space, satellite)
 
 
 def create_orbit_image(space, body):
     """Создаёт изображение орбиты для объекта.
 
-    Орбита строится как окружность вокруг центра системы.
-    Это простое визуальное отображение, не влияющее на физическую модель.
+    Для планеты орбита строится вокруг звезды.
+    Для спутника орбита строится вокруг планеты.
     """
 
-    orbit_radius = int(((body.x ** 2 + body.y ** 2) ** 0.5) * scale_factor)
-    center_x = window_width // 2
-    center_y = window_height // 2
+    center = getattr(body, "center", None)
+    orbit_radius = getattr(body, "orbit_radius", None)
+
+    if center is None or orbit_radius is None:
+        return
+
+    center_x = scale_x(center.x)
+    center_y = scale_y(center.y)
+    radius = int(orbit_radius * scale_factor)
 
     body.orbit_image = space.create_oval(
-        center_x - orbit_radius,
-        center_y - orbit_radius,
-        center_x + orbit_radius,
-        center_y + orbit_radius,
+        center_x - radius,
+        center_y - radius,
+        center_x + radius,
+        center_y + radius,
         outline="gray25"
     )
 
@@ -124,6 +114,7 @@ def set_orbit_visibility(space, body, visible):
     """Включает или выключает отображение орбиты объекта."""
 
     orbit_image = getattr(body, "orbit_image", None)
+
     if orbit_image is None:
         return
 
@@ -132,20 +123,12 @@ def set_orbit_visibility(space, body, visible):
 
 
 def update_system_name(space, system_name):
-    """Создаёт на холсте текст с названием системы небесных тел.
-
-    Если текст уже был, обновляет его содержание.
-
-    Параметры:
-
-    **space** — холст для рисования.
-    **system_name** — название системы тел.
-    """
+    """Создаёт на холсте текст с названием системы небесных тел."""
 
     space.delete("header")
     space.create_text(
-        30,
-        80,
+        20,
+        25,
         tag="header",
         text=system_name,
         font=header_font,
@@ -155,13 +138,10 @@ def update_system_name(space, system_name):
 
 
 def update_object_position(space, body):
-    """Перемещает отображаемый объект на холсте.
+    """Перемещает отображаемый объект на холсте."""
 
-    Параметры:
-
-    **space** — холст для рисования.
-    **body** — тело, которое нужно переместить.
-    """
+    if body.image is None:
+        return
 
     x = scale_x(body.x)
     y = scale_y(body.y)

@@ -3,17 +3,15 @@
 
 """Модуль чтения и записи данных о космических объектах."""
 
-from solar_objects import Planet, Star
+from solar_objects import Planet, Satellite, Star
 
 
 def read_space_objects_data_from_file(input_filename):
     """Cчитывает данные о космических объектах из файла.
 
-    Создаёт объекты Star и Planet и заполняет их параметры.
-
-    Параметры:
-
-    **input_filename** — имя входного файла.
+    Поддерживает старый формат преподавателя:
+    Star <радиус> <цвет> <масса> <x> <y> <Vx> <Vy>
+    Planet <радиус> <цвет> <масса> <x> <y> <Vx> <Vy>
     """
 
     objects = []
@@ -42,18 +40,7 @@ def read_space_objects_data_from_file(input_filename):
 
 
 def parse_star_parameters(line, star):
-    """Считывает данные о звезде из строки.
-
-    Входная строка должна иметь следующий формат:
-    Star <радиус в пикселах> <цвет> <масса> <x> <y> <Vx> <Vy>
-
-    Здесь (x, y) — координаты звезды, (Vx, Vy) — скорость.
-
-    Параметры:
-
-    **line** — строка с описанием звезды.
-    **star** — объект звезды.
-    """
+    """Считывает данные о звезде из строки."""
 
     parts = line.split()
 
@@ -70,18 +57,7 @@ def parse_star_parameters(line, star):
 
 
 def parse_planet_parameters(line, planet):
-    """Считывает данные о планете из строки.
-
-    Входная строка должна иметь следующий формат:
-    Planet <радиус в пикселах> <цвет> <масса> <x> <y> <Vx> <Vy>
-
-    Здесь (x, y) — координаты планеты, (Vx, Vy) — скорость.
-
-    Параметры:
-
-    **line** — строка с описанием планеты.
-    **planet** — объект планеты.
-    """
+    """Считывает данные о планете из строки."""
 
     parts = line.split()
 
@@ -97,26 +73,35 @@ def parse_planet_parameters(line, planet):
     planet.Vy = float(parts[7])
 
 
+def get_object_type_for_file(obj):
+    """Возвращает название типа объекта для записи в файл."""
+
+    if isinstance(obj, Star) or obj.type == "star":
+        return "Star"
+
+    if isinstance(obj, Planet) or obj.type == "planet":
+        return "Planet"
+
+    if isinstance(obj, Satellite) or obj.type == "satellite":
+        return "Satellite"
+
+    return "Unknown"
+
+
 def write_space_objects_data_to_file(output_filename, space_objects):
     """Сохраняет данные о космических объектах в файл.
 
-    Строки имеют следующий формат:
-    Star <радиус в пикселах> <цвет> <масса> <x> <y> <Vx> <Vy>
-    Planet <радиус в пикселах> <цвет> <масса> <x> <y> <Vx> <Vy>
-
-    Параметры:
-
-    **output_filename** — имя выходного файла.
-    **space_objects** — список объектов планет и звёзд.
+    Для совместимости сохраняются основные параметры:
+    тип, радиус, цвет, масса, координаты и скорость.
     """
 
     with open(output_filename, "w", encoding="utf-8") as out_file:
+        print("# Saved solar system state", file=out_file)
+
         for obj in space_objects:
-            if obj.type == "star":
-                object_type = "Star"
-            elif obj.type == "planet":
-                object_type = "Planet"
-            else:
+            object_type = get_object_type_for_file(obj)
+
+            if object_type == "Unknown":
                 continue
 
             line = (
