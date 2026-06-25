@@ -12,10 +12,10 @@ header_font = "Arial-16"
 """Шрифт в заголовке"""
 
 window_width = 1000
-"""Ширина окна"""
+"""Ширина холста"""
 
-window_height = 800
-"""Высота окна"""
+window_height = 580
+"""Высота холста. Уменьшена, чтобы нижняя панель с кнопками помещалась на экране."""
 
 scale_factor = None
 """Масштабирование экранных координат по отношению к физическим.
@@ -25,7 +25,7 @@ scale_factor = None
 
 
 def calculate_scale_factor(max_distance):
-    """Вычисляет значение глобальной переменной **scale_factor** по данной характерной длине."""
+    """Вычисляет значение глобальной переменной scale_factor по данной характерной длине."""
 
     global scale_factor
 
@@ -37,15 +37,15 @@ def calculate_scale_factor(max_distance):
 
 
 def scale_x(x):
-    """Возвращает экранную **x** координату по **x** координате модели."""
+    """Возвращает экранную x-координату по x-координате модели."""
 
     return int(x * scale_factor) + window_width // 2
 
 
 def scale_y(y):
-    """Возвращает экранную **y** координату по **y** координате модели.
+    """Возвращает экранную y-координату по y-координате модели.
 
-    Направление оси развёрнуто, чтобы у модели ось **y** смотрела вверх.
+    Направление оси развёрнуто, чтобы у модели ось y смотрела вверх.
     """
 
     return window_height // 2 - int(y * scale_factor)
@@ -62,7 +62,7 @@ def create_circle_image(space, body):
         [x - r, y - r],
         [x + r, y + r],
         fill=body.color,
-        outline=body.color
+        outline=body.color,
     )
 
 
@@ -106,7 +106,7 @@ def create_orbit_image(space, body):
         center_y - radius,
         center_x + radius,
         center_y + radius,
-        outline="gray25"
+        outline="gray25",
     )
 
 
@@ -133,7 +133,7 @@ def update_system_name(space, system_name):
         text=system_name,
         font=header_font,
         fill="white",
-        anchor="w"
+        anchor="w",
     )
 
 
@@ -153,7 +153,7 @@ def update_object_position(space, body):
             window_width + r,
             window_height + r,
             window_width + 2 * r,
-            window_height + 2 * r
+            window_height + 2 * r,
         )
         return
 

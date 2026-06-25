@@ -210,13 +210,17 @@ def execution():
     displayed_time.set("%.1f" % physical_time + " seconds gone")
 
     if perform_execution:
-        space.after(101 - int(time_speed.get()), execution)
+        delay = max(1, 101 - int(time_speed.get()))
+        space.after(delay, execution)
 
 
 def start_execution():
     """Запускает моделирование."""
 
     global perform_execution
+
+    if perform_execution:
+        return
 
     perform_execution = True
     start_button["text"] = "Pause"
@@ -235,6 +239,15 @@ def stop_execution():
     start_button["text"] = "Start"
     start_button["command"] = start_execution
     print("Paused execution.")
+
+
+def toggle_execution(event=None):
+    """Запускает или останавливает моделирование по клавише Пробел."""
+
+    if perform_execution:
+        stop_execution()
+    else:
+        start_execution()
 
 
 def toggle_orbits():
@@ -308,6 +321,9 @@ def load_exam_variant():
     calculate_scale_factor(get_max_distance(space_objects))
     create_images_for_objects()
 
+    start_button["text"] = "Start"
+    start_button["command"] = start_execution
+
     print("Exam variant 3-4 loaded")
     print("Objects:", len(space_objects))
 
@@ -337,6 +353,9 @@ def open_file_dialog():
     calculate_scale_factor(get_max_distance(space_objects))
     create_images_for_objects()
 
+    start_button["text"] = "Start"
+    start_button["command"] = start_execution
+
 
 def save_file_dialog():
     """Сохраняет текущее состояние системы в файл."""
@@ -365,17 +384,22 @@ def main():
 
     root = tkinter.Tk()
     root.title("Solar system — exam variant 3-4")
+    root.geometry("1100x680")
+    root.minsize(900, 620)
+
+    main_frame = tkinter.Frame(root)
+    main_frame.pack(fill=tkinter.BOTH, expand=True)
 
     space = tkinter.Canvas(
-        root,
+        main_frame,
         width=window_width,
         height=window_height,
         bg="black",
     )
-    space.pack(side=tkinter.TOP)
+    space.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=True)
 
-    frame = tkinter.Frame(root)
-    frame.pack(side=tkinter.BOTTOM)
+    frame = tkinter.Frame(main_frame)
+    frame.pack(side=tkinter.BOTTOM, fill=tkinter.X)
 
     start_button = tkinter.Button(
         frame,
@@ -383,7 +407,7 @@ def main():
         command=start_execution,
         width=8,
     )
-    start_button.pack(side=tkinter.LEFT)
+    start_button.pack(side=tkinter.LEFT, padx=2, pady=4)
 
     orbit_button = tkinter.Button(
         frame,
@@ -391,7 +415,7 @@ def main():
         command=toggle_orbits,
         width=10,
     )
-    orbit_button.pack(side=tkinter.LEFT)
+    orbit_button.pack(side=tkinter.LEFT, padx=2, pady=4)
 
     load_variant_button = tkinter.Button(
         frame,
@@ -399,13 +423,13 @@ def main():
         command=load_exam_variant,
         width=15,
     )
-    load_variant_button.pack(side=tkinter.LEFT)
+    load_variant_button.pack(side=tkinter.LEFT, padx=2, pady=4)
 
     time_step = tkinter.DoubleVar()
     time_step.set(1)
 
     time_step_entry = tkinter.Entry(frame, textvariable=time_step, width=8)
-    time_step_entry.pack(side=tkinter.LEFT)
+    time_step_entry.pack(side=tkinter.LEFT, padx=2, pady=4)
 
     time_speed = tkinter.DoubleVar()
     time_speed.set(50)
@@ -414,22 +438,23 @@ def main():
         frame,
         variable=time_speed,
         orient=tkinter.HORIZONTAL,
+        length=150,
     )
-    scale.pack(side=tkinter.LEFT)
+    scale.pack(side=tkinter.LEFT, padx=2, pady=0)
 
     load_file_button = tkinter.Button(
         frame,
         text="Open file...",
         command=open_file_dialog,
     )
-    load_file_button.pack(side=tkinter.LEFT)
+    load_file_button.pack(side=tkinter.LEFT, padx=2, pady=4)
 
     save_file_button = tkinter.Button(
         frame,
         text="Save to file...",
         command=save_file_dialog,
     )
-    save_file_button.pack(side=tkinter.LEFT)
+    save_file_button.pack(side=tkinter.LEFT, padx=2, pady=4)
 
     displayed_time = tkinter.StringVar()
     displayed_time.set(str(physical_time) + " seconds gone")
@@ -437,9 +462,11 @@ def main():
     time_label = tkinter.Label(
         frame,
         textvariable=displayed_time,
-        width=30,
+        width=24,
     )
-    time_label.pack(side=tkinter.RIGHT)
+    time_label.pack(side=tkinter.RIGHT, padx=2, pady=4)
+
+    root.bind("<space>", toggle_execution)
 
     load_exam_variant()
 
